@@ -44,6 +44,11 @@ func ConnectProducer() (sarama.SyncProducer, error) {
 }
 
 func main() {
+	producer, err := ConnectProducer()
+	if err != nil {
+		log.Println("Failed to connect into stream")
+	}
+	defer producer.Close()
 	app := gin.New()
 	app.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, map[string]string{
@@ -59,24 +64,21 @@ func main() {
 			})
 			return
 		}
-		go func(data []Transaction) {
-			producer, err := ConnectProducer()
-			if err != nil {
-				log.Println("Failed to connect into stream")
-			}
-			defer producer.Close()
+		go func() {
+			data := body.Data
+			pub := producer
 			for _, trx := range data {
 				messageByte, _ := json.Marshal(trx)
 				msg := &sarama.ProducerMessage{
 					Topic: TOPIC,
 					Value: sarama.StringEncoder(string(messageByte)),
 				}
-				_, _, err := producer.SendMessage(msg)
+				_, _, err := pub.SendMessage(msg)
 				if err != nil {
 					log.Println("Failed to push message")
 				}
 			}
-		}(body.Data)
+		}()
 		ctx.JSON(http.StatusCreated, map[string]string{
 			"message": "Transaction created",
 		})
