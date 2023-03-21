@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"os"
 	"os/signal"
 	"strings"
@@ -12,11 +12,15 @@ import (
 
 	"log"
 
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
+
 	"github.com/Shopify/sarama"
 )
 
 const (
-	TOPIC = "user_created"
+	TOPIC    = "user_created"
+	GROUP_ID = "user_created_consumer"
 )
 
 func ConnectConsumer() (sarama.ConsumerGroup, error) {
@@ -26,7 +30,7 @@ func ConnectConsumer() (sarama.ConsumerGroup, error) {
 	}
 	config := sarama.NewConfig()
 	config.Consumer.Return.Errors = true
-	conn, err := sarama.NewConsumerGroup(strings.Split(urls, ","), "user_created_consumer", config)
+	conn, err := sarama.NewConsumerGroup(strings.Split(urls, ","), GROUP_ID, config)
 	if err != nil {
 		return nil, err
 	}
@@ -42,6 +46,14 @@ type Transaction struct {
 }
 
 func main() {
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		databaseURL = "postgresql://postgres:mystrongpassword@localhost:5432/restapi?sslmode=disable"
+	}
+	db, err := sqlx.Connect("postgres", databaseURL)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	keepRunning := true
 	ctx, cancel := context.WithCancel(context.Background())
 	worker, err := ConnectConsumer()
@@ -50,6 +62,7 @@ func main() {
 	}
 	consumer := Consumer{
 		ready: make(chan bool),
+		db:    db,
 	}
 	consumptionIsPaused := false
 	wg := &sync.WaitGroup{}
@@ -87,10 +100,14 @@ func main() {
 			toggleConsumptionFlow(worker, &consumptionIsPaused)
 		}
 	}
+	// ? Gracefully shutdown
 	cancel()
 	wg.Wait()
 	if err = worker.Close(); err != nil {
-		log.Panicf("Error closing client: %v", err)
+		log.Panicf("Error closing Consumer: %v", err)
+	}
+	if err = db.Close(); err != nil {
+		log.Panicf("Error closing database: %v", err)
 	}
 }
 
@@ -109,6 +126,7 @@ func toggleConsumptionFlow(client sarama.ConsumerGroup, isPaused *bool) {
 // Consumer represents a Sarama consumer group consumer
 type Consumer struct {
 	ready chan bool
+	db    *sqlx.DB
 }
 
 func (consumer *Consumer) Setup(sarama.ConsumerGroupSession) error {
@@ -124,12 +142,23 @@ func (consumer *Consumer) Cleanup(sarama.ConsumerGroupSession) error {
 
 // ConsumeClaim must start a consumer loop of ConsumerGroupClaim's Messages().
 func (consumer *Consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+	count := 1
 	for {
 		select {
-		case message := <-claim.Messages():
-			// TODO: Insert into database
-			fmt.Println(string(message.Value))
-			session.MarkMessage(message, "created")
+		case msg := <-claim.Messages():
+			var trx Transaction
+			if err := json.Unmarshal(msg.Value, &trx); err != nil {
+				log.Println("Failed to serialize data") // ? <- this should never gonna happened
+				continue
+			}
+			_, err := consumer.db.Exec(`INSERT INTO "public"."transactions" ("id", "customer", "quantity", "price", "timestamp") VALUES ($1, $2, $3, $4, $5)`, trx.ID, trx.Customer, trx.Quantity, trx.Quantity, trx.Timestamp)
+			if err != nil {
+				log.Println("Failed to insert data ", err)
+				continue
+			}
+			log.Println(count)
+			count++
+			session.MarkMessage(msg, "created")
 		case <-session.Context().Done():
 			return nil
 		}

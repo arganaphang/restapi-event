@@ -26,6 +26,7 @@ services:
       - restapi_network
     environment:
       BROKER_URLS: "redpanda:19092"
+      DATABASE_URL: "postgresql://postgres:mystrongpassword@postgres:5432?sslmode=disabled"
   postgres:
     build:
       context: ./database
