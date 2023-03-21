@@ -4,20 +4,34 @@ services:
     build:
       context: ./application
       dockerfile: ./Dockerfile
+    container_name: restapi_application
     depends_on:
       - postgres
+      - redpanda
+    networks:
+      - restapi_network
     ports:
       - 8000:8000
+    environment:
+      BROKER_URLS: "redpanda:19092"
   consumer:
     build:
       context: ./consumer
       dockerfile: ./Dockerfile
+    container_name: restapi_consumer
     depends_on:
       - postgres
+      - redpanda
+    networks:
+      - restapi_network
+    environment:
+      BROKER_URLS: "redpanda:19092"
   postgres:
     image: postgres:alpine
     container_name: restapi_postgres
     restart: always
+    networks:
+      - restapi_network
     ports:
       - 5432:5432
     environment:
@@ -30,6 +44,56 @@ services:
       interval: 1s
       timeout: 5s
       retries: 10
+  redpanda:
+    image: redpandadata/redpanda
+    container_name: restapi_redpanda
+    command:
+      - redpanda
+      - start
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr internal://redpanda:9092,external://localhost:19092
+      - --pandaproxy-addr internal://0.0.0.0:8082,external://0.0.0.0:18082
+      - --advertise-pandaproxy-addr internal://redpanda:8082,external://localhost:18082
+      - --schema-registry-addr internal://0.0.0.0:8081,external://0.0.0.0:18081
+      - --rpc-addr redpanda:33145
+      - --advertise-rpc-addr redpanda:33145
+      - --smp 1
+      - --memory 1G
+      - --mode dev-container
+      - --default-log-level=debug
+    networks:
+      - restapi_network
+    ports:
+      - 18081:18081
+      - 18082:18082
+      - 19092:19092
+      - 19644:9644
+  console:
+    container_name: restapi_redpanda_console
+    image: redpandadata/console
+    networks:
+      - restapi_network
+    entrypoint: /bin/sh
+    command: -c 'echo "$$CONSOLE_CONFIG_FILE" > /tmp/config.yml; /app/console'
+    environment:
+      CONFIG_FILEPATH: /tmp/config.yml
+      CONSOLE_CONFIG_FILE: |
+        kafka:
+          brokers: ["redpanda:9092"]
+          schemaRegistry:
+            enabled: true
+            urls: ["http://redpanda:8081"]
+        redpanda:
+          adminApi:
+            enabled: true
+            urls: ["http://redpanda:9644"]
+    ports:
+      - 8080:8080
+    depends_on:
+      - redpanda
 
 volumes:
   pgdata:
+networks:
+  restapi_network:
+    driver: bridge
