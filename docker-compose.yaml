@@ -27,7 +27,9 @@ services:
     environment:
       BROKER_URLS: "redpanda:19092"
   postgres:
-    image: postgres:alpine
+    build:
+      context: ./database
+      dockerfile: ./Dockerfile
     container_name: restapi_postgres
     restart: always
     networks:
