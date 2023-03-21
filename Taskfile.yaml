@@ -1,0 +1,17 @@
+version: '3'
+tasks:
+  run:application:
+    cmds:
+      - go run ./application/src/main.go
+  run:consumer:
+    cmds:
+      - go run ./consumer/src/main.go
+  start:
+    cmds:
+      - docker-compose up -d --build
+  down:
+    cmds:
+      - docker-compose down
+  test:load:
+    cmds:
+      - hey -n 1 -c 1 -m POST http://localhost:8000/save -d ./request_body.txt

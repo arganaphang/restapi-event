@@ -1,0 +1,22 @@
+POST http://localhost:8000/save
+Content-Type: application/json
+
+{
+  "request_id": 1,
+  "data": [
+    {
+      "id": 1,
+      "customer": "John Doe",
+      "quantity": 1,
+      "price": 5.2,
+      "timestamp": "2022-01-01T22:10:44Z"
+    },
+    {
+      "id": 2,
+      "customer": "Lucas Smith",
+      "quantity": 3,
+      "price": 10,
+      "timestamp": "2023-02-21T03:10:12Z"
+    }
+  ]
+}

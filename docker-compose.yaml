@@ -1,0 +1,35 @@
+version: '3'
+services:
+  application:
+    build:
+      context: ./application
+      dockerfile: ./Dockerfile
+    depends_on:
+      - postgres
+    ports:
+      - 8000:8000
+  consumer:
+    build:
+      context: ./consumer
+      dockerfile: ./Dockerfile
+    depends_on:
+      - postgres
+  postgres:
+    image: postgres:alpine
+    container_name: restapi_postgres
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_DB: restapi
+      POSTGRES_PASSWORD: mystrongpassword
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ “CMD-SHELL”, “pg_isready” ]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
