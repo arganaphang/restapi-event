@@ -14,4 +14,4 @@ tasks:
       - docker-compose down
   test:load:
     cmds:
-      - hey -n 1 -c 1 -m POST http://localhost:8000/save -d ./request_body.txt
+      - 'hey -n 1000 -c 50 -m POST -H "Content-Type: application/json" -D ./request_body.txt http://localhost:8000/save'
