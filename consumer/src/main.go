@@ -151,7 +151,7 @@ func (consumer *Consumer) ConsumeClaim(session sarama.ConsumerGroupSession, clai
 				log.Println("Failed to serialize data") // ? <- this should never gonna happened
 				continue
 			}
-			_, err := consumer.db.Exec(`INSERT INTO "public"."transactions" ("id", "customer", "quantity", "price", "timestamp") VALUES ($1, $2, $3, $4, $5)`, trx.ID, trx.Customer, trx.Quantity, trx.Quantity, trx.Timestamp)
+			_, err := consumer.db.Exec(`INSERT INTO "public"."transactions" ("id", "customer", "quantity", "price", "timestamp") VALUES ($1, $2, $3, $4, $5)`, trx.ID, trx.Customer, trx.Quantity, trx.Price, trx.Timestamp)
 			if err != nil {
 				log.Println("Failed to insert data ", err)
 				continue
