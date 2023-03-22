@@ -65,7 +65,8 @@ I've tested the server with 100000 Request, that's mean 2 * 100000 = 200000 data
 
 ![Database Count](/assets/database_2.png)
 > select * from transactions limit 300; -- of course we need to limit this query to prevent database client crash
-> field insert wrong field for `price` and already fixed in [This Commit](/commit/a416fb36d444143e8771c4164ee44ccae7921498#diff-c148edd2cbfefa32169ce5dbef35c4e81413f7212a8140d69f4242689baa2321R154)
+
+> Field insert wrong field for `price` and already fixed in [This Commit](https://github.com/arganaphang/restapi-event/commit/a416fb36d444143e8771c4164ee44ccae7921498#diff-c148edd2cbfefa32169ce5dbef35c4e81413f7212a8140d69f4242689baa2321R154)
 
 ## Architecture
 
