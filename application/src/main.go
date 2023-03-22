@@ -64,21 +64,19 @@ func main() {
 			})
 			return
 		}
-		go func() {
-			data := body.Data
-			pub := producer
+		go func(producer sarama.SyncProducer, data []Transaction) {
 			for _, trx := range data {
 				messageByte, _ := json.Marshal(trx)
 				msg := &sarama.ProducerMessage{
 					Topic: TOPIC,
 					Value: sarama.StringEncoder(string(messageByte)),
 				}
-				_, _, err := pub.SendMessage(msg)
+				_, _, err := producer.SendMessage(msg)
 				if err != nil {
 					log.Println("Failed to push message")
 				}
 			}
-		}()
+		}(producer, body.Data)
 		ctx.JSON(http.StatusCreated, map[string]string{
 			"message": "Transaction created",
 		})

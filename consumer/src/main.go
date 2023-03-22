@@ -67,7 +67,7 @@ func main() {
 	consumptionIsPaused := false
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
-	go func() {
+	go func(ctx context.Context, worker sarama.ConsumerGroup) {
 		defer wg.Done()
 		for {
 			if err := worker.Consume(ctx, strings.Split(TOPIC, ","), &consumer); err != nil {
@@ -78,7 +78,7 @@ func main() {
 			}
 			consumer.ready = make(chan bool)
 		}
-	}()
+	}(ctx, worker)
 
 	<-consumer.ready // Await till the consumer has been set up
 	log.Println("Sarama consumer up and running!...")
