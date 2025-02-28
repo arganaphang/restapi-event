@@ -1,21 +1,18 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
-	"github.com/Shopify/sarama"
 	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx"
 )
 
 const (
-	PORT  = 8000
-	TOPIC = "user_created"
+	PORT = 8000
 )
 
 type Transaction struct {
@@ -31,21 +28,19 @@ type RequestBody struct {
 	Data      []Transaction `json:"data" binding:"dive"`
 }
 
-func ConnectProducer() (sarama.SyncProducer, error) {
-	fmt.Println(os.Getenv("BROKER_URLS"))
-	config := sarama.NewConfig()
-	config.Producer.Return.Successes = true
-	config.Producer.RequiredAcks = sarama.WaitForAll
-	config.Producer.Retry.Max = 5
-	return sarama.NewSyncProducer(strings.Split(os.Getenv("BROKER_URLS"), ","), config)
-}
-
 func main() {
-	producer, err := ConnectProducer()
+	databaseURL := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		os.Getenv("DATABASE_HOST"),
+		"5432",
+		os.Getenv("DATABASE_USER"),
+		os.Getenv("DATABASE_PASSWORD"),
+		os.Getenv("DATABASE_NAME"),
+	)
+	db, err := sqlx.Connect("postgres", databaseURL)
 	if err != nil {
-		log.Println("Failed to connect into stream")
+		log.Fatalln(err)
 	}
-	defer producer.Close()
 	app := gin.New()
 	app.SetTrustedProxies(nil)
 	app.GET("/healthz", func(ctx *gin.Context) {
@@ -62,19 +57,14 @@ func main() {
 			})
 			return
 		}
-		go func(producer sarama.SyncProducer, data []Transaction) {
-			for _, trx := range data {
-				messageByte, _ := json.Marshal(trx)
-				msg := &sarama.ProducerMessage{
-					Topic: TOPIC,
-					Value: sarama.StringEncoder(string(messageByte)),
-				}
-				_, _, err := producer.SendMessage(msg)
-				if err != nil {
-					log.Println("Failed to push message")
-				}
+		// TODO: Insert To Database
+		for _, trx := range body.Data {
+			_, err := db.Exec(`INSERT INTO "public"."transactions" ("id", "customer", "quantity", "price", "timestamp") VALUES ($1, $2, $3, $4, $5)`, trx.ID, trx.Customer, trx.Quantity, trx.Price, trx.Timestamp)
+			if err != nil {
+				log.Println("Failed to insert data ", err)
 			}
-		}(producer, body.Data)
+		}
+
 		ctx.JSON(http.StatusCreated, map[string]string{
 			"message": "Transaction created",
 		})
