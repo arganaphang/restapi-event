@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/signal"
 	"strings"
@@ -24,13 +25,9 @@ const (
 )
 
 func ConnectConsumer() (sarama.ConsumerGroup, error) {
-	urls := os.Getenv("BROKER_URLS")
-	if urls == "" {
-		urls = "localhost:19092"
-	}
 	config := sarama.NewConfig()
 	config.Consumer.Return.Errors = true
-	conn, err := sarama.NewConsumerGroup(strings.Split(urls, ","), GROUP_ID, config)
+	conn, err := sarama.NewConsumerGroup(strings.Split(os.Getenv("BROKER_URLS"), ","), GROUP_ID, config)
 	if err != nil {
 		return nil, err
 	}
@@ -46,10 +43,14 @@ type Transaction struct {
 }
 
 func main() {
-	databaseURL := os.Getenv("DATABASE_URL")
-	if databaseURL == "" {
-		databaseURL = "postgresql://postgres:mystrongpassword@localhost:5432/restapi?sslmode=disable"
-	}
+	databaseURL := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		os.Getenv("DATABASE_HOST"),
+		"5432",
+		os.Getenv("DATABASE_USER"),
+		os.Getenv("DATABASE_PASSWORD"),
+		os.Getenv("DATABASE_NAME"),
+	)
 	db, err := sqlx.Connect("postgres", databaseURL)
 	if err != nil {
 		log.Fatalln(err)

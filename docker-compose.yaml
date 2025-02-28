@@ -25,20 +25,22 @@ services:
       - restapi_network
     environment:
       BROKER_URLS: redpanda:9092
-      DATABASE_URL: postgresql://postgres:mystrongpassword@postgres:5432/restapi?sslmode=disable
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
   postgres:
-    build:
-      context: ./database
-      dockerfile: ./Dockerfile
+    image: postgres:alpine
     container_name: restapi_postgres
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
     restart: always
     networks:
       - restapi_network
     ports:
       - 5432:5432
-    environment:
-      POSTGRES_DB: restapi
-      POSTGRES_PASSWORD: mystrongpassword
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -47,7 +49,7 @@ services:
       timeout: 5s
       retries: 10
   redpanda:
-    image: redpandadata/redpanda
+    image: docker.redpanda.com/redpandadata/redpanda
     container_name: restapi_redpanda
     command:
       - redpanda
@@ -72,7 +74,7 @@ services:
       - 19644:9644
   console:
     container_name: restapi_redpanda_console
-    image: redpandadata/console
+    image: docker.redpanda.com/redpandadata/console
     networks:
       - restapi_network
     entrypoint: /bin/sh

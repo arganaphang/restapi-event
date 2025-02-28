@@ -32,15 +32,12 @@ type RequestBody struct {
 }
 
 func ConnectProducer() (sarama.SyncProducer, error) {
-	urls := os.Getenv("BROKER_URLS")
-	if urls == "" {
-		urls = "localhost:19092"
-	}
+	fmt.Println(os.Getenv("BROKER_URLS"))
 	config := sarama.NewConfig()
 	config.Producer.Return.Successes = true
 	config.Producer.RequiredAcks = sarama.WaitForAll
 	config.Producer.Retry.Max = 5
-	return sarama.NewSyncProducer(strings.Split(urls, ","), config)
+	return sarama.NewSyncProducer(strings.Split(os.Getenv("BROKER_URLS"), ","), config)
 }
 
 func main() {
@@ -50,7 +47,8 @@ func main() {
 	}
 	defer producer.Close()
 	app := gin.New()
-	app.GET("/", func(ctx *gin.Context) {
+	app.SetTrustedProxies(nil)
+	app.GET("/healthz", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, map[string]string{
 			"message": "OK",
 		})

@@ -1,0 +1,18 @@
+{
+    "dbcode.connections": [
+        {
+            "connectionId": "DeGETWHYQLPQBT_SMZeex",
+            "name": "RestAPI Event Driver",
+            "driver": "postgres",
+            "connectionType": "host",
+            "host": "localhost",
+            "port": 5432,
+            "ssl": false,
+            "username": "postgres",
+            "password": "",
+            "savePassword": "no",
+            "database": "restapi",
+            "connectionTimeout": 30
+        }
+    ]
+}
