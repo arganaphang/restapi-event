@@ -16,28 +16,28 @@ Simple Service using RESTFullAPI and Event Driven
 ## Prerequirement
 
 - Docker + Docker Compose
-- [Tasks](https://taskfile.dev/) Runner (Makefile alternative)
+- [Justfile](https://github.com/casey/just) Runner (Makefile alternative)
+- [Watchexec](https://github.com/watchexec/watchexec) Watcher
 - [Hey](https://github.com/rakyll/hey) Http load Testing
 
 ## How to run?
 
-### Using Task runner
+### Using Just runner
 
 1. to start the postgres, redpanda, consumer, and application
 ```sh
-task start
+docker-compose up -d --build
 ```
 you can access [Redpanda Console](http://localhost:8080/overview) to see redpanda messages
 2. to run load testing
 ```sh
-task test:load
+just test-load
 ```
-this command will seed the traffic based on `n` request at `Taskile.yaml`, i set it 100000 requests
 the request body you can see it at `request_body.txt` for data i give it 2 transaction per request, so it will insert n * 2 into postgres
 
 ### Manual
 
-All of the commands that i using already documented at `Taskfile.yaml`
+All of the commands that i using already documented at `Justfile`
 See detail about this command above
 
 1. Run Services
