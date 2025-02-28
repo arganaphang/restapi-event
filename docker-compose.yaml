@@ -12,19 +12,6 @@ services:
     ports:
       - 8000:8000
     environment:
-      BROKER_URLS: redpanda:9092
-  consumer:
-    build:
-      context: ./consumer
-      dockerfile: ./Dockerfile
-    container_name: restapi_consumer
-    depends_on:
-      - postgres
-      - redpanda
-    networks:
-      - restapi_network
-    environment:
-      BROKER_URLS: redpanda:9092
       DATABASE_HOST: ${DATABASE_HOST}
       DATABASE_NAME: ${DATABASE_NAME}
       DATABASE_USER: ${DATABASE_USER}

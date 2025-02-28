@@ -1,4 +1,4 @@
-# Simple RESTfull API
+# Simple RESTfull API (Monolith)
 
 Simple Service using RESTFullAPI and Event Driven
 
@@ -28,7 +28,6 @@ Simple Service using RESTFullAPI and Event Driven
 ```sh
 docker-compose up -d --build
 ```
-you can access [Redpanda Console](http://localhost:8080/overview) to see redpanda messages
 2. to run load testing
 ```sh
 just test-load
@@ -55,23 +54,14 @@ hey -n 100000 -c 50 -m POST -H "Content-Type: application/json" -D ./request_bod
 I've tested the server with 100000 Request, that's mean 2 * 100000 = 200000 data will be inserted into database
 
 ![Load Testing](/assets/load_test.png)
-> We can see the average for each request is <ins>*0.0077 secs*</ins>, fastest is <ins>*0.0004 secs*</ins>, slowest is <ins>*0.1533 secs*</ins>
-
-![Redpanda Console](/assets/redpanda_console.png)
-> <ins>200,000 Messages</ins>
+> We can see the average time to make all request is <ins>*79.1818 secs*</ins>, for each request is <ins>*0.0380 secs*</ins>, fastest is <ins>*0.0018 secs*</ins>, slowest is <ins>*8.1858 secs*</ins>, and Request/Sec is<ins>1262.9173</ins>
 
 ![Database Count](/assets/database_1.png)
 > select count(id) from transactions;
 
 ![Database Count](/assets/database_2.png)
-> select * from transactions limit 300; -- of course we need to limit this query to prevent database client crash
-
-> Field insert wrong field for `price` and already fixed in [This Commit](https://github.com/arganaphang/restapi-event/commit/a416fb36d444143e8771c4164ee44ccae7921498#diff-c148edd2cbfefa32169ce5dbef35c4e81413f7212a8140d69f4242689baa2321R154)
+> select * from transactions limit 100; -- of course we need to limit this query to prevent database slow loading
 
 ## Architecture
 
 ![Architecture Diagram](/assets/architecture.png)
-
-## Todos
-
-- [ ] Optimize consumer using worker pool
