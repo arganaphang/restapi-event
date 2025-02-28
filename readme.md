@@ -1,4 +1,4 @@
-# Simple RESTfull API
+# Simple RESTfull API (Microservice)
 
 Simple Service using RESTFullAPI and Event Driven
 
@@ -55,7 +55,7 @@ hey -n 100000 -c 50 -m POST -H "Content-Type: application/json" -D ./request_bod
 I've tested the server with 100000 Request, that's mean 2 * 100000 = 200000 data will be inserted into database
 
 ![Load Testing](/assets/load_test.png)
-> We can see the average for each request is <ins>*0.0077 secs*</ins>, fastest is <ins>*0.0004 secs*</ins>, slowest is <ins>*0.1533 secs*</ins>
+> We can see the average time to make all request is <ins>*5.7172 secs*</ins>, for each request is <ins>*0.0026 secs*</ins>, fastest is <ins>*0.0001 secs*</ins>, slowest is <ins>*0.6050 secs*</ins>, and Request/Sec is <ins>17491.2106</ins>
 
 ![Redpanda Console](/assets/redpanda_console.png)
 > <ins>200,000 Messages</ins>
@@ -64,9 +64,7 @@ I've tested the server with 100000 Request, that's mean 2 * 100000 = 200000 data
 > select count(id) from transactions;
 
 ![Database Count](/assets/database_2.png)
-> select * from transactions limit 300; -- of course we need to limit this query to prevent database client crash
-
-> Field insert wrong field for `price` and already fixed in [This Commit](https://github.com/arganaphang/restapi-event/commit/a416fb36d444143e8771c4164ee44ccae7921498#diff-c148edd2cbfefa32169ce5dbef35c4e81413f7212a8140d69f4242689baa2321R154)
+> select * from transactions limit 100; -- of course we need to limit this query to prevent database client crash
 
 ## Architecture
 
