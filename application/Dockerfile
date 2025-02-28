@@ -4,7 +4,7 @@ COPY go.mod .
 COPY go.sum .
 RUN go mod download
 COPY . .
-RUN go build -o /app/application ./src/main.go
+RUN go build -o /app/application ./main.go
 
 FROM alpine
 WORKDIR /usr/bin
