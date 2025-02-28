@@ -73,3 +73,4 @@ I've tested the server with 100000 Request, that's mean 2 * 100000 = 200000 data
 ## Todos
 
 - [ ] Optimize consumer using worker pool
+- [ ] Optimize consumer database using database pooling
